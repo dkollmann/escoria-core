@@ -102,23 +102,23 @@ func _process(delta: float) -> void:
 				_on_event_finished
 			):
 				_running_events[channel_name].finished.connect(
-					_on_event_finished.bind([channel_name], CONNECT_ONE_SHOT)
+					_on_event_finished.bind(channel_name),
+					CONNECT_ONE_SHOT
 				)
 			if not _running_events[channel_name].interrupted.is_connected(
 				_on_event_finished
 			):
 				_running_events[channel_name].interrupted.connect(
-					_on_event_finished.bind([channel_name], CONNECT_ONE_SHOT)
+					_on_event_finished.bind(channel_name),
+					CONNECT_ONE_SHOT
 				)
 
 			if channel_name == CHANNEL_FRONT:
-				emit_signal(
-					"event_started",
+				event_started.emit(
 					_running_events[channel_name].name
 				)
 			else:
-				emit_signal(
-					"background_event_started",
+				background_event_started.emit(
 					channel_name,
 					_running_events[channel_name].name
 				)
@@ -407,14 +407,12 @@ func _on_event_finished(finished_event: ESCStatement, finished_statement: ESCSta
 	_channels_state[channel_name] = true
 
 	if channel_name == CHANNEL_FRONT:
-		emit_signal(
-			"event_finished",
+		event_finished.emit(
 			return_code,
 			event.name
 		)
 	else:
-		emit_signal(
-			"background_event_finished",
+		background_event_finished.emit(
 			return_code,
 			event.name,
 			channel_name

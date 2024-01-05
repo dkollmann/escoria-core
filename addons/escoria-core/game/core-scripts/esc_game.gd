@@ -33,8 +33,7 @@ enum EDITOR_GAME_DEBUG_DISPLAY {
 # Which (if any) debug mode for the editor is used
 @export var editor_debug_mode: EDITOR_GAME_DEBUG_DISPLAY = \
 		EDITOR_GAME_DEBUG_DISPLAY.NONE:
-		set(new_value):
-			_set_editor_debug_mode(new_value)
+		set = _set_editor_debug_mode
 
 # The Control node underneath which all UI must be placed.
 # This should be a Control node and NOT a CanvasLayer (or any other type of) node.
@@ -454,7 +453,7 @@ func show_crash_popup(files: Array = []) -> void:
 	crash_popup.popup_centered()
 	escoria.set_game_paused(true)
 	await crash_popup.confirmed
-	emit_signal("crash_popup_confirmed")
+	crash_popup_confirmed.emit()
 
 
 # *** FOR USE BY ESCORIA CORE ONLY ***
@@ -494,4 +493,4 @@ func _input(event):
 		return
 
 	if event.is_action_pressed("ui_cancel"):
-		emit_signal("request_pause_menu")
+		request_pause_menu.emit()

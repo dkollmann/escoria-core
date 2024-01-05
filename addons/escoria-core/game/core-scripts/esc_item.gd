@@ -145,8 +145,7 @@ const GROUP_ITEM_CAN_COLLIDE = "item_can_collide"
 
 # The node used to play animations
 @export var animation_player_node: NodePath = "":
-		set(new_value):
-			_set_animation_player_node(new_value)
+		set = _set_animation_player_node
 
 # The node that references the camera position and zoom if this item is used
 # as a camera target
@@ -358,13 +357,13 @@ func _unhandled_input(input_event: InputEvent) -> void:
 		var p = get_global_mouse_position()
 		if _is_in_shape(p) and escoria.action_manager.is_object_actionable(global_id):
 			if event.doubleclick and event.button_index == MOUSE_BUTTON_LEFT:
-				emit_signal("mouse_double_left_clicked_item", self, event)
+				mouse_double_left_clicked_item.emit(self, event)
 				get_viewport().set_input_as_handled()
 			elif event.button_index == MOUSE_BUTTON_LEFT:
-				emit_signal("mouse_left_clicked_item", self, event)
+				mouse_left_clicked_item.emit(self, event)
 				get_viewport().set_input_as_handled()
 			elif event.button_index == MOUSE_BUTTON_RIGHT:
-				emit_signal("mouse_right_clicked_item", self, event)
+				mouse_right_clicked_item.emit(self, event)
 				get_viewport().set_input_as_handled()
 
 
@@ -451,13 +450,13 @@ func set_animations(p_animations: ESCAnimationResource) -> void:
 # Return the animation player node
 func get_animation_player() -> Node:
 	if _animation_player == null:
-		var player_node_path = animation_player_node
-		if player_node_path == "":
+		var player_node_path := animation_player_node
+		if player_node_path.is_empty():
 			for child in self.get_children():
 				if child is AnimatedSprite2D or \
 						child is AnimationPlayer:
 					player_node_path = child.get_path()
-		if player_node_path == "":
+		if player_node_path.is_empty():
 			escoria.logger.warn(
 				self,
 				"Can not find animation_player or animated sprite for %s." % global_id
@@ -530,12 +529,12 @@ func get_interact_position() -> Vector2:
 # React to the mouse entering the item by emitting the respective signal
 func mouse_entered():
 	if escoria.action_manager.is_object_actionable(global_id):
-		emit_signal("mouse_entered_item", self)
+		mouse_entered_item.emit(self)
 
 
 # React to the mouse exiting the item by emitting the respective signal
 func mouse_exited():
-	emit_signal("mouse_exited_item",  self)
+	mouse_exited_item.emit(self)
 
 
 # Another item (e.g. the player) has entered this item
