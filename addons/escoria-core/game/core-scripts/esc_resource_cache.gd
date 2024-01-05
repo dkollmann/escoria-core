@@ -16,12 +16,12 @@ func queue_resource(path: String, p_in_front: bool = false, p_permanent: bool = 
 	if path in pending:
 		return
 
-	elif ResourceLoader.has(path):
+	elif ResourceLoader.has_cached(path):
 		var res = ResourceLoader.load(path)
 		pending[path] = ESCResourceDescriptor.new(res, p_permanent)
 	else:
-		var res = ResourceLoader.load_interactive(path)
-		res.set_meta("path", path)
+		var res = ResourceLoader.load_threaded_request(path)
+		res.resource_path = path
 		if p_in_front:
 			queue.insert(0, res)
 		else:
@@ -31,7 +31,7 @@ func queue_resource(path: String, p_in_front: bool = false, p_permanent: bool = 
 
 func cancel_resource(path):
 	if path in pending:
-		if pending[path].res is ResourceInteractiveLoader:
+		if pending[path].res is ResourceLoader:
 			queue.erase(pending[path].res)
 		pending.erase(path)
 
@@ -48,7 +48,7 @@ func clear():
 func get_progress(path):
 	var ret = -1
 	if path in pending:
-		if pending[path].res is ResourceInteractiveLoader:
+		if pending[path].res is ResourceLoader:
 			ret = float(pending[path].res.get_stage()) / float(pending[path].res.get_stage_count())
 		else:
 			ret = 1.0
@@ -62,7 +62,7 @@ func is_ready(path):
 	var ret
 
 	if path in pending:
-		ret = !(pending[path].res is ResourceInteractiveLoader)
+		ret = !(pending[path].res is ResourceLoader)
 	else:
 		ret = false
 
@@ -72,7 +72,7 @@ func is_ready(path):
 func _wait_for_resource(res, path):
 	while true:
 		#VisualServer.call("sync") # workaround because sync is a keyword
-		VisualServer.force_sync()
+		RenderingServer.force_sync()
 		OS.delay_usec(16000) # wait 1 frame
 
 		if queue.size() == 0 || queue[0] != res:
@@ -81,11 +81,11 @@ func _wait_for_resource(res, path):
 
 func get_resource(path):
 	if path in pending:
-		if pending[path].res is ResourceInteractiveLoader:
+		if pending[path].res is ResourceLoader:
 			var res = pending[path].res
 			if res != queue[0]:
 				var pos = queue.find(res)
-				queue.remove(pos)
+				queue.remove_at(pos)
 				queue.insert(0, res)
 
 			res = _wait_for_resource(res, path)

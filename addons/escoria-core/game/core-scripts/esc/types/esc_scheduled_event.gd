@@ -1,5 +1,5 @@
 # An event that is scheduled to run later
-extends Reference
+extends RefCounted
 class_name ESCScheduledEvent
 
 
@@ -21,4 +21,4 @@ func _init(p_event: ESCEvent, p_timeout: float):
 #
 # **Returns** The execution code
 func run() -> int:
-	return event.run()
+	return await event.run()

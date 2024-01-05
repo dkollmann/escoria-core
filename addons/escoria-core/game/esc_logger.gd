@@ -76,7 +76,7 @@ class ESCLoggerBase:
 		return _log_level
 
 	func _formatted_date():
-		var info = OS.get_datetime()
+		var info = Time.get_datetime_dict_from_system()
 		info["year"] = "%04d" % info["year"]
 		info["month"] = "%02d" % info["month"]
 		info["day"] = "%02d" % info["day"]
@@ -89,43 +89,41 @@ class ESCLoggerBase:
 # A logger that logs to the terminal and to a log file.
 class ESCLoggerFile extends ESCLoggerBase:
 	# Log file handler
-	var log_file: File
+	var log_file: FileAccess
 
 	# Constructor
 	func _init():
-		# Open logfile in write mode
-		log_file = File.new()
-
 		# This is left alone as this constructor is called from escoria.gd's own
 		# constructor
 		var log_file_path = ProjectSettings.get_setting(
 			ESCProjectSettingsManager.LOG_FILE_PATH
 		)
-		var date = OS.get_datetime()
-		log_file_path = log_file_path.plus_file(LOG_FILE_FORMAT % [
+		var date = Time.get_datetime_dict_from_system()
+		log_file_path = log_file_path.path_join(LOG_FILE_FORMAT % [
 				str(date["year"]) + str(date["month"]) + str(date["day"]),
 				str(date["hour"]) + str(date["minute"]) + str(date["second"])
 			])
-		log_file.open(
+		# Open logfile in write mode
+		log_file = FileAccess.open(
 			log_file_path,
-			File.WRITE
+			FileAccess.WRITE
 		)
 
 	func trace(owner: Object, msg: String):
 		if _log_level >= LOG_TRACE:
 			_log_to_file(owner, msg, "T")
-			.trace(owner, msg)
+			super.trace(owner, msg)
 
 	# Debug log
 	func debug(owner: Object, msg: String):
 		if _log_level >= LOG_DEBUG:
 			_log_to_file(owner, msg, "D")
-			.debug(owner, msg)
+			super.debug(owner, msg)
 
 	func info(owner: Object, msg: String):
 		if _log_level >= LOG_INFO:
 			_log_to_file(owner, msg, "I")
-			.info(owner, msg)
+			super.info(owner, msg)
 
 	# Warning log
 	func warn(owner: Object, msg: String):
@@ -137,7 +135,7 @@ class ESCLoggerFile extends ESCLoggerBase:
 				_log_stack_trace_to_file(owner)
 				print_stack()
 				close_logs()
-			.warn(owner, msg)
+			super.warn(owner, msg)
 
 	# Error log
 	func error(owner: Object, msg: String):
@@ -149,7 +147,7 @@ class ESCLoggerFile extends ESCLoggerBase:
 				_log_stack_trace_to_file(owner)
 				print_stack()
 				close_logs()
-			.error(owner, msg)
+			super.error(owner, msg)
 
 
 	# Close the log file cleanly

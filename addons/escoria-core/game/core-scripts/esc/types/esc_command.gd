@@ -33,7 +33,7 @@ func _init(command_string):
 				# Split parameters by whitespace but allow quoted
 				# parameters
 				var quote_open = false
-				var parameter_values = PoolStringArray([])
+				var parameter_values = PackedStringArray([])
 				var parsed_parameters = \
 					ESCUtils.sanitize_whitespace(
 						ESCUtils.get_re_group(
@@ -62,7 +62,7 @@ func _init(command_string):
 						parameter_values.append(
 							parameter.substr(0, len(parameter))
 						)
-						parameters.append(parameter_values.join(" "))
+						parameters.append(" ".join(parameter_values))
 						parameter_values.resize(0)
 					elif quote_open:
 						parameter_values.append(parameter)
@@ -94,7 +94,7 @@ func is_valid() -> bool:
 		)
 		return false
 
-	return .is_valid()
+	return super.is_valid()
 
 
 # Checks that the command exists
@@ -115,7 +115,7 @@ func command_exists() -> bool:
 
 # Run this command
 func run() -> int:
-	var command_object = escoria.command_registry.get_command(self.name)
+	var command_object = escoria.command_registry.is_command_or_control_pressed(self.name)
 	if command_object == null:
 		return ESCExecution.RC_ERROR
 	else:
@@ -130,10 +130,7 @@ func run() -> int:
 				"Running command %s with parameters %s."
 						% [self.name, prepared_arguments]
 			)
-			var rc = command_object.run(prepared_arguments)
-			if rc is GDScriptFunctionState:
-				rc = yield(rc, "completed")
-
+			var rc = await command_object.run(prepared_arguments)
 			escoria.logger.debug(
 				self,
 				"[%s] Return code: %d." % [self.name, rc]
@@ -148,7 +145,7 @@ func run() -> int:
 # immediately and finish. If it was already finished, nothing will happen.
 func interrupt():
 	_is_interrupted = true
-	var command = escoria.command_registry.get_command(self.name)
+	var command = escoria.command_registry.is_command_or_control_pressed(self.name)
 	if command.has_method("interrupt"):
 		command.interrupt()
 

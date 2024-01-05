@@ -31,7 +31,7 @@ func apply_settings() -> void:
 
 		AudioServer.set_bus_volume_db(
 			AudioServer.get_bus_index(escoria.BUS_MASTER),
-			linear2db(
+			linear_to_db(
 				ESCProjectSettingsManager.get_setting(
 					ESCProjectSettingsManager.MASTER_VOLUME
 				)
@@ -39,7 +39,7 @@ func apply_settings() -> void:
 		)
 		AudioServer.set_bus_volume_db(
 			AudioServer.get_bus_index(escoria.BUS_SFX),
-			linear2db(
+			linear_to_db(
 				ESCProjectSettingsManager.get_setting(
 					ESCProjectSettingsManager.SFX_VOLUME
 				)
@@ -47,7 +47,7 @@ func apply_settings() -> void:
 		)
 		AudioServer.set_bus_volume_db(
 			AudioServer.get_bus_index(escoria.BUS_MUSIC),
-			linear2db(
+			linear_to_db(
 				ESCProjectSettingsManager.get_setting(
 					ESCProjectSettingsManager.MUSIC_VOLUME
 				)
@@ -55,14 +55,14 @@ func apply_settings() -> void:
 		)
 		AudioServer.set_bus_volume_db(
 			AudioServer.get_bus_index(escoria.BUS_SPEECH),
-			linear2db(
+			linear_to_db(
 				ESCProjectSettingsManager.get_setting(
 					ESCProjectSettingsManager.SPEECH_VOLUME
 				)
 			)
 		)
-		OS.window_fullscreen = ESCProjectSettingsManager.get_setting(
-			ESCProjectSettingsManager.FULLSCREEN
+		DisplayServer.window_set_mode(
+			ESCProjectSettingsManager.get_setting(ESCProjectSettingsManager.WINDOWMODE)
 		)
 		TranslationServer.set_locale(
 			ESCProjectSettingsManager.get_setting(
@@ -103,8 +103,8 @@ func save_settings_resource_to_project_settings(settings: ESCSaveSettings):
 		settings.speech_volume
 	)
 	ESCProjectSettingsManager.set_setting(
-		ESCProjectSettingsManager.FULLSCREEN,
-		settings.fullscreen
+		ESCProjectSettingsManager.WINDOWMODE,
+		DisplayServer.WINDOW_MODE_FULLSCREEN if settings.fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
 	)
 	custom_settings = settings.custom_settings
 
@@ -112,9 +112,8 @@ func save_settings_resource_to_project_settings(settings: ESCSaveSettings):
 # Load the game settings from the settings file
 func load_settings():
 	var save_settings_path: String = \
-			settings_folder.plus_file(SETTINGS_TEMPLATE)
-	var file: File = File.new()
-	if not file.file_exists(save_settings_path):
+			settings_folder.path_join(SETTINGS_TEMPLATE)
+	if not FileAccess.file_exists(save_settings_path):
 		escoria.logger.warn(
 			self,
 			"Settings file %s doesn't exist" % save_settings_path
@@ -154,8 +153,8 @@ func get_settings() -> ESCSaveSettings:
 		ESCProjectSettingsManager.SPEECH_VOLUME
 	)
 	settings.fullscreen = ESCProjectSettingsManager.get_setting(
-		ESCProjectSettingsManager.FULLSCREEN
-	)
+		ESCProjectSettingsManager.WINDOWMODE
+	) >= DisplayServer.WINDOW_MODE_FULLSCREEN
 	settings.custom_settings = custom_settings
 
 	return settings
@@ -166,12 +165,11 @@ func get_settings() -> ESCSaveSettings:
 func save_settings():
 	var settings = get_settings()
 
-	var directory: Directory = Directory.new()
-	if not directory.dir_exists(settings_folder):
-		directory.make_dir_recursive(settings_folder)
+	if not DirAccess.dir_exists_absolute(settings_folder):
+		DirAccess.make_dir_recursive_absolute(settings_folder)
 
-	var save_path = settings_folder.plus_file(SETTINGS_TEMPLATE)
-	var error: int = ResourceSaver.save(save_path, settings)
+	var save_path = settings_folder.path_join(SETTINGS_TEMPLATE)
+	var error: int = ResourceSaver.save(settings, save_path)
 	if error != OK:
 		escoria.logger.error(
 			self,

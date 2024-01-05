@@ -1,7 +1,8 @@
+@tool
+@icon("res://addons/escoria-core/design/esc_room.svg")
 # A room in an Escora based game
-tool
 extends Node2D
-class_name ESCRoom, "res://addons/escoria-core/design/esc_room.svg"
+class_name ESCRoom
 
 
 # Debugging displays for a room
@@ -16,21 +17,27 @@ const ESC_BACKGROUND_NAME = "escbackground"
 
 
 # The global id of this room
-export(String) var global_id = ""
+@export var global_id: String = ""
 
 # The ESC script of this room
-export(String, FILE, "*.esc") var esc_script = ""
+@export var esc_script = "" # (String, FILE, "*.esc")
 
 # The player inside this scene
-export(PackedScene) var player_scene
+@export var player_scene: PackedScene
 
 # The camera limits available in this room
-export(Array, Rect2) var camera_limits: Array \
-	= [Rect2()] setget set_camera_limits
+@export var camera_limits: Array[Rect2] \
+	= [Rect2()]:
+		set(new_value):
+			camera_limits = new_value
+			queue_redraw()
 
 # The editor debug display mode
-export(EditorRoomDebugDisplay) var editor_debug_mode \
-	= EditorRoomDebugDisplay.NONE setget set_editor_debug_mode
+@export var editor_debug_mode: EditorRoomDebugDisplay \
+	= EditorRoomDebugDisplay.NONE:
+		set(new_value):
+			editor_debug_mode = new_value
+			queue_redraw()
 
 
 # The player scene instance
@@ -82,7 +89,7 @@ func _ready():
 	if not found_escbackground:
 		var esc_bg = ESCBackground.new()
 		esc_bg.name = ESC_BACKGROUND_NAME
-		if not camera_limits.empty():
+		if not camera_limits.is_empty():
 			esc_bg.set_size(camera_limits.front().size)
 		add_child(esc_bg)
 		move_child(esc_bg, 0)
@@ -98,7 +105,7 @@ func _draw():
 		return
 
 	var camera_limits_colors: Array = [
-		ColorN("red"), ColorN("blue"), ColorN("green")
+		Color.RED, Color.BLUE, Color.GREEN
 	]
 
 	# If there are more camera limits than colors defined for them, add more.
@@ -126,8 +133,8 @@ func _connect_location_nodes() -> void:
 func _connect_location_nodes_in_tree(node: Node):
 	for n in node.get_children():
 		if n is ESCLocation:
-			if not n.is_connected("is_start_location_set", self, "_validate_start_locations"):
-				n.connect("is_start_location_set", self, "_validate_start_locations")
+			if not n.is_connected("is_start_location_set", Callable(self, "_validate_start_locations")):
+				n.connect("is_start_location_set", Callable(self, "_validate_start_locations"))
 
 		if n.get_child_count() > 0:
 			_connect_location_nodes_in_tree(n)
@@ -165,24 +172,3 @@ func _find_esc_locations(node: Node) -> Array:
 			esc_locations.append_array(_find_esc_locations(n))
 
 	return esc_locations
-
-
-# Set the camera limits
-#
-# #### Parameters
-#
-# - p_camera_limits: An array of Rect2Ds as camera limits
-func set_camera_limits(p_camera_limits: Array) -> void:
-	camera_limits = p_camera_limits
-	update()
-
-
-# Set the editor debug mode
-#
-# #### Parameters
-#
-# - p_editor_debug_mode: The debug mode to set for the room
-func set_editor_debug_mode(p_editor_debug_mode: int) -> void:
-	editor_debug_mode = p_editor_debug_mode
-	update()
-
