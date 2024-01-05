@@ -26,7 +26,7 @@ const TRANSITION_INSTANT = "instant"
 var transition_id: int = 0
 
 # The tween instance to animate
-var _tween: Tween
+var _tween: Tween3
 
 # If the current tween was canceled
 var _was_canceled: bool = false
@@ -41,7 +41,7 @@ func _ready() -> void:
 	color = Color.WHITE
 	color.a = 0
 	mouse_filter = MOUSE_FILTER_IGNORE
-	_tween = get_tree().create_tween()
+	_tween = Tween3.new(self)
 
 
 # Play a transition animation
@@ -95,22 +95,25 @@ func transition(
 		start = 1.0
 		end = 0.0
 
-	if _tween.is_active():
+	if _tween.is_running():
 		_was_canceled = true
-		_tween.stop_all()
-		_tween.remove_all()
 		transition_done.emit(transition_id-1)
 
-	_tween.interpolate_property(
-		$".",
-		"material:shader_param/cutoff",
+	_tween.reset()
+	_tween.tween_method(
+		_set_cutoff,
 		start,
 		end,
 		duration
 	)
+	
 	_was_canceled = false
-	_tween.start()
+	_tween.play()
 	return transition_id
+
+
+func _set_cutoff(cutoff: float):
+	material.set("shader_parameter/cutoff", cutoff)
 
 
 # Returns the full path for a transition shader based on its name
@@ -124,8 +127,8 @@ func get_transition(name: String) -> String:
 	for directory in ESCProjectSettingsManager.get_setting(
 		ESCProjectSettingsManager.TRANSITION_PATHS
 	):
-		if ResourceLoader.exists(directory.plus_file("%s.material" % name)):
-			return directory.plus_file("%s.material" % name)
+		if ResourceLoader.exists(directory.path_join("%s.material" % name)):
+			return directory.path_join("%s.material" % name)
 	return ""
 
 
@@ -151,7 +154,5 @@ func reset_shader_cutoff() -> void:
 
 func _on_tween_completed():
 	if not _was_canceled:
-		_tween.stop_all()
-		_tween.remove_all()
 		escoria.logger.debug(self, "Transition %s done." % str(transition_id))
 		transition_done.emit(transition_id)

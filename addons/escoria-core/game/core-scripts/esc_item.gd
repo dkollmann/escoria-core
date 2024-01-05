@@ -127,8 +127,7 @@ const GROUP_ITEM_CAN_COLLIDE = "item_can_collide"
 
 # The visual representation for this item when its in the inventory
 @export var inventory_texture: Texture2D = null:
-		get:
-			return _get_inventory_texture()
+		get = _get_inventory_texture
 
 # Color used for dialogs
 @export var dialog_color: Color = Color(1,1,1,1)
@@ -490,12 +489,9 @@ func get_interact_position() -> Vector2:
 	for c in get_children():
 		if c is Marker2D:
 			# Identify any Postion2D nodes
-			if c.is_class("ESCLocation"):
+			if c is ESCLocation:
 				esclocation_count += 1
 				esclocation_position = c.global_position
-			elif c.is_class("ESCInteractionLocation"):
-				interact_count += 1
-				interact_position = c.global_position
 			else:
 				# This will catch all other Position2D related nodes
 				# including dialog locations and native Position2D nodes.
